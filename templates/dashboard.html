@@ -2,23 +2,34 @@
 <html>
 <head>
     <title>Dashboard</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 </head>
-<body>
-    <h1>Welcome, {{ username }}!</h1>
-    <p>This is your study tracker dashboard.</p>
+<body class="bg-light">
 
-    <h2>Your Scores:</h2>
+<div class="container mt-4">
+    <h1 class="text-center">Welcome, {{ username }}!</h1>
+    <p class="text-center text-muted">This is your study tracker dashboard.</p>
+
+    <div class="d-flex justify-content-end mb-3">
+        <a href="/add_score" class="btn btn-success me-2">➕ Add Score</a>
+        <a href="/logout" class="btn btn-danger">🚪 Logout</a>
+    </div>
+
+    <h2>Your Scores</h2>
     {% if scores %}
-        <table border="1" cellpadding="5">
-            <tr>
-                <th>Date</th>
-                <th>Subject</th>
-                <th>Test Type</th>
-                <th>Score</th>
-                <th>Max Score</th>
-                <th>Actions</th>
-            </tr>
+        <table class="table table-striped table-hover">
+            <thead class="table-dark">
+                <tr>
+                    <th>Date</th>
+                    <th>Subject</th>
+                    <th>Test Type</th>
+                    <th>Score</th>
+                    <th>Max Score</th>
+                    <th>Actions</th>
+                </tr>
+            </thead>
+            <tbody>
             {% for s in scores %}
             <tr>
                 <td>{{ s[1] }}</td>
@@ -27,22 +38,41 @@
                 <td>{{ s[4] }}</td>
                 <td>{{ s[5] }}</td>
                 <td>
-                    <a href="/edit_score/{{ s[0] }}">Edit</a> |
-                    <a href="/delete_score/{{ s[0] }}" onclick="return confirm('Are you sure you want to delete this score?')">Delete</a>
+                    <a href="/edit_score/{{ s[0] }}" class="btn btn-sm btn-primary">Edit</a>
+                    <a href="/delete_score/{{ s[0] }}" class="btn btn-sm btn-danger"
+                       onclick="return confirm('Are you sure you want to delete this score?')">Delete</a>
                 </td>
             </tr>
             {% endfor %}
+            </tbody>
         </table>
 
-        <!-- Charts section stays the same -->
-        <h2>Progress Chart</h2>
-        <canvas id="scoreChart" width="400" height="200"></canvas>
+        <div class="row">
+            <div class="col-md-6">
+                <div class="card mb-4 shadow-sm">
+                    <div class="card-body">
+                        <h5 class="card-title">Progress Over Time</h5>
+                        <canvas id="scoreChart"></canvas>
+                    </div>
+                </div>
+            </div>
 
-        <h2>Average Score per Subject</h2>
-        <canvas id="avgChart" width="400" height="200"></canvas>
+            <div class="col-md-6">
+                <div class="card mb-4 shadow-sm">
+                    <div class="card-body">
+                        <h5 class="card-title">Average Score per Subject</h5>
+                        <canvas id="avgChart"></canvas>
+                    </div>
+                </div>
+            </div>
+        </div>
 
-        <h2>Weakest Subject</h2>
-        <p id="weakest"></p>
+        <div class="card shadow-sm">
+            <div class="card-body">
+                <h5 class="card-title">Weakest Subject</h5>
+                <p id="weakest" class="fw-bold text-danger"></p>
+            </div>
+        </div>
 
         <script>
             const labels = {{ scores | map(attribute=1) | list | tojson }};
@@ -108,11 +138,9 @@
             }
         </script>
     {% else %}
-        <p>No scores yet. Add one <a href="/add_score">here</a>.</p>
+        <div class="alert alert-warning">No scores yet. Add one <a href="/add_score">here</a>.</div>
     {% endif %}
+</div>
 
-    <br>
-    <a href="/add_score">Add Score</a> |
-    <a href="/logout">Logout</a>
 </body>
 </html>
