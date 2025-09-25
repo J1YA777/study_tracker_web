@@ -7,6 +7,31 @@
     <h1>Welcome, {{ username }}!</h1>
     <p>This is your study tracker dashboard.</p>
 
+    <h2>Your Scores:</h2>
+    {% if scores %}
+        <table border="1" cellpadding="5">
+            <tr>
+                <th>Date</th>
+                <th>Subject</th>
+                <th>Test Type</th>
+                <th>Score</th>
+                <th>Max Score</th>
+            </tr>
+            {% for s in scores %}
+            <tr>
+                <td>{{ s[0] }}</td>
+                <td>{{ s[1] }}</td>
+                <td>{{ s[2] }}</td>
+                <td>{{ s[3] }}</td>
+                <td>{{ s[4] }}</td>
+            </tr>
+            {% endfor %}
+        </table>
+    {% else %}
+        <p>No scores yet. Add one <a href="/add_score">here</a>.</p>
+    {% endif %}
+
+    <br>
     <a href="/add_score">Add Score</a> |
     <a href="/logout">Logout</a>
 </body>
