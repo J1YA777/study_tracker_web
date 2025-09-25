@@ -87,13 +87,19 @@ def login():
 
     return render_template("login.html")
 
-# Dashboard Route
+# Dashboard Route (updated to show scores)
 @app.route("/dashboard")
 def dashboard():
     if "user_id" not in session:
         return redirect("/login")
 
-    return render_template("dashboard.html", username=session["username"])
+    conn = sqlite3.connect("database.db")
+    cur = conn.cursor()
+    cur.execute("SELECT date, subject, test_type, score, max_score FROM scores WHERE user_id=?", (session["user_id"],))
+    scores = cur.fetchall()
+    conn.close()
+
+    return render_template("dashboard.html", username=session["username"], scores=scores)
 
 # Add Score Route
 @app.route("/add_score", methods=["GET", "POST"])
