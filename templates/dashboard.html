@@ -29,9 +29,20 @@
             {% endfor %}
         </table>
 
+        <!-- Progress Over Time -->
         <h2>Progress Chart</h2>
         <canvas id="scoreChart" width="400" height="200"></canvas>
+
+        <!-- Average Per Subject -->
+        <h2>Average Score per Subject</h2>
+        <canvas id="avgChart" width="400" height="200"></canvas>
+
+        <!-- Weakest Subject -->
+        <h2>Weakest Subject</h2>
+        <p id="weakest"></p>
+
         <script>
+            // Data for Progress Chart
             const labels = {{ scores | map(attribute=0) | list | tojson }};
             const scores = {{ scores | map(attribute=3) | list | tojson }};
             const maxScores = {{ scores | map(attribute=4) | list | tojson }};
@@ -55,7 +66,50 @@
                     }]
                 }
             });
+
+            // Data for Average Chart
+            const subjects = {{ subject_avgs | map(attribute=0) | list | tojson }};
+            const avgScores = {{ subject_avgs | map(attribute=1) | list | tojson }};
+            const avgMaxScores = {{ subject_avgs | map(attribute=2) | list | tojson }};
+
+            new Chart(document.getElementById('avgChart'), {
+                type: 'bar',
+                data: {
+                    labels: subjects,
+                    datasets: [{
+                        label: 'Average Score',
+                        data: avgScores,
+                        backgroundColor: 'green'
+                    },
+                    {
+                        label: 'Average Max',
+                        data: avgMaxScores,
+                        backgroundColor: 'gray'
+                    }]
+                }
+            });
+
+            // Weakest Subject Detection
+            if (subjects.length > 0) {
+                let weakestIndex = 0;
+                let lowestPercent = (avgScores[0] / avgMaxScores[0]) * 100;
+
+                for (let i = 1; i < subjects.length; i++) {
+                    let percent = (avgScores[i] / avgMaxScores[i]) * 100;
+                    if (percent < lowestPercent) {
+                        lowestPercent = percent;
+                        weakestIndex = i;
+                    }
+                }
+
+                document.getElementById("weakest").innerText =
+                    "Your weakest subject is: " + subjects[weakestIndex] +
+                    " (" + lowestPercent.toFixed(1) + "%)";
+            } else {
+                document.getElementById("weakest").innerText = "No scores yet.";
+            }
         </script>
+
     {% else %}
         <p>No scores yet. Add one <a href="/add_score">here</a>.</p>
     {% endif %}
