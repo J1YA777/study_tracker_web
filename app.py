@@ -2,14 +2,12 @@ from flask import Flask, render_template, request, redirect, session
 import sqlite3
 
 app = Flask(__name__)
-app.secret_key = "any_random_secret_key"  # keep secret in real apps
+app.secret_key = "your_secret_key_here"  # enables session storage
 
 # -----------------------------
 # DATABASE SETUP
 # -----------------------------
 conn = sqlite3.connect("database.db")
-
-# Create users table
 conn.execute("""
 CREATE TABLE IF NOT EXISTS users (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -17,8 +15,6 @@ CREATE TABLE IF NOT EXISTS users (
     password TEXT
 )
 """)
-
-# Create scores table
 conn.execute("""
 CREATE TABLE IF NOT EXISTS scores (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -31,21 +27,16 @@ CREATE TABLE IF NOT EXISTS scores (
     FOREIGN KEY(user_id) REFERENCES users(id)
 )
 """)
-
 conn.close()
 
 # -----------------------------
 # ROUTES
 # -----------------------------
-
 @app.route("/")
 def home():
-    return """
-    <h1>Welcome to Study Tracker Web App!</h1>
-    <a href='/register'>Register</a> | <a href='/login'>Login</a>
-    """
+    return "<h1>Welcome to Study Tracker Web App!</h1><a href='/login'>Login</a> | <a href='/register'>Register</a>"
 
-# Register Route
+# Register
 @app.route("/register", methods=["GET", "POST"])
 def register():
     if request.method == "POST":
@@ -54,18 +45,18 @@ def register():
 
         conn = sqlite3.connect("database.db")
         cur = conn.cursor()
-
         try:
             cur.execute("INSERT INTO users (username, password) VALUES (?, ?)", (username, password))
             conn.commit()
-            conn.close()
-            return redirect("/login")
         except:
-            return "Username already exists! Try another one."
+            conn.close()
+            return "Username already exists!"
+        conn.close()
+        return redirect("/login")
 
     return render_template("register.html")
 
-# Login Route
+# Login
 @app.route("/login", methods=["GET", "POST"])
 def login():
     if request.method == "POST":
@@ -79,15 +70,21 @@ def login():
         conn.close()
 
         if user:
-            session["username"] = username
             session["user_id"] = user[0]
+            session["username"] = username
             return redirect("/dashboard")
         else:
             return "Invalid username or password!"
 
     return render_template("login.html")
 
-# Dashboard Route 
+# Logout
+@app.route("/logout")
+def logout():
+    session.clear()
+    return redirect("/")
+
+# Dashboard
 @app.route("/dashboard")
 def dashboard():
     if "user_id" not in session:
@@ -96,11 +93,9 @@ def dashboard():
     conn = sqlite3.connect("database.db")
     cur = conn.cursor()
 
-    # Fetch all scores for logged-in user
-    cur.execute("SELECT date, subject, test_type, score, max_score FROM scores WHERE user_id=?", (session["user_id"],))
+    cur.execute("SELECT id, date, subject, test_type, score, max_score FROM scores WHERE user_id=?", (session["user_id"],))
     scores = cur.fetchall()
 
-    # Calculate average per subject
     cur.execute("""
         SELECT subject, AVG(score), AVG(max_score)
         FROM scores
@@ -111,18 +106,13 @@ def dashboard():
 
     conn.close()
 
-    return render_template(
-        "dashboard.html",
-        username=session["username"],
-        scores=scores,
-        subject_avgs=subject_avgs
-    )
+    return render_template("dashboard.html", username=session["username"], scores=scores, subject_avgs=subject_avgs)
 
-# Add Score Route
+# Add Score
 @app.route("/add_score", methods=["GET", "POST"])
 def add_score():
     if "user_id" not in session:
-        return redirect("/login")  # must be logged in
+        return redirect("/login")
 
     if request.method == "POST":
         date = request.form["date"]
@@ -131,12 +121,10 @@ def add_score():
         score = float(request.form["score"])
         max_score = float(request.form["max_score"])
 
-        user_id = session["user_id"]
-
         conn = sqlite3.connect("database.db")
         cur = conn.cursor()
         cur.execute("INSERT INTO scores (user_id, date, subject, test_type, score, max_score) VALUES (?, ?, ?, ?, ?, ?)",
-                    (user_id, date, subject, test_type, score, max_score))
+                    (session["user_id"], date, subject, test_type, score, max_score))
         conn.commit()
         conn.close()
 
@@ -144,11 +132,53 @@ def add_score():
 
     return render_template("add_score.html")
 
-# Logout Route
-@app.route("/logout")
-def logout():
-    session.clear()
-    return redirect("/login")
+# Edit Score
+@app.route("/edit_score/<int:score_id>", methods=["GET", "POST"])
+def edit_score(score_id):
+    if "user_id" not in session:
+        return redirect("/login")
+
+    conn = sqlite3.connect("database.db")
+    cur = conn.cursor()
+
+    if request.method == "POST":
+        date = request.form["date"]
+        subject = request.form["subject"]
+        test_type = request.form["test_type"]
+        score = float(request.form["score"])
+        max_score = float(request.form["max_score"])
+
+        cur.execute("""
+            UPDATE scores
+            SET date=?, subject=?, test_type=?, score=?, max_score=?
+            WHERE id=? AND user_id=?
+        """, (date, subject, test_type, score, max_score, score_id, session["user_id"]))
+        conn.commit()
+        conn.close()
+
+        return redirect("/dashboard")
+
+    # Pre-fill form with existing data
+    cur.execute("SELECT date, subject, test_type, score, max_score FROM scores WHERE id=? AND user_id=?",
+                (score_id, session["user_id"]))
+    score_data = cur.fetchone()
+    conn.close()
+
+    return render_template("edit_score.html", score=score_data, score_id=score_id)
+
+# Delete Score
+@app.route("/delete_score/<int:score_id>")
+def delete_score(score_id):
+    if "user_id" not in session:
+        return redirect("/login")
+
+    conn = sqlite3.connect("database.db")
+    cur = conn.cursor()
+    cur.execute("DELETE FROM scores WHERE id=? AND user_id=?", (score_id, session["user_id"]))
+    conn.commit()
+    conn.close()
+
+    return redirect("/dashboard")
 
 # -----------------------------
 # RUN APP
