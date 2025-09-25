@@ -1,12 +1,14 @@
-from flask import Flask, render_template, request, redirect, session
+from flask import Flask, render_template, request, redirect, session, url_for, flash
 import sqlite3
+import os
 
 app = Flask(__name__)
-app.secret_key = "your_secret_key_here"  # enables session storage
+app.secret_key = "any_random_secret_key"  # change this to something else if you want
 
 # -----------------------------
 # DATABASE SETUP
 # -----------------------------
+# Ensure database exists and tables are created
 conn = sqlite3.connect("database.db")
 conn.execute("""
 CREATE TABLE IF NOT EXISTS users (
@@ -34,9 +36,12 @@ conn.close()
 # -----------------------------
 @app.route("/")
 def home():
-    return "<h1>Welcome to Study Tracker Web App!</h1><a href='/login'>Login</a> | <a href='/register'>Register</a>"
+    return """
+    <h1>Welcome to Study Tracker Web App!</h1>
+    <a href='/register'>Register</a> | <a href='/login'>Login</a>
+    """
 
-# Register
+# Register Route
 @app.route("/register", methods=["GET", "POST"])
 def register():
     if request.method == "POST":
@@ -45,18 +50,21 @@ def register():
 
         conn = sqlite3.connect("database.db")
         cur = conn.cursor()
+
         try:
             cur.execute("INSERT INTO users (username, password) VALUES (?, ?)", (username, password))
             conn.commit()
-        except:
             conn.close()
-            return "Username already exists!"
-        conn.close()
-        return redirect("/login")
+            flash("Account created — now log in.", "success")
+            return redirect("/login")
+        except Exception as e:
+            conn.close()
+            flash("Username already exists! Try another one.", "danger")
+            return redirect("/register")
 
     return render_template("register.html")
 
-# Login
+# Login Route
 @app.route("/login", methods=["GET", "POST"])
 def login():
     if request.method == "POST":
@@ -70,19 +78,15 @@ def login():
         conn.close()
 
         if user:
-            session["user_id"] = user[0]
             session["username"] = username
+            session["user_id"] = user[0]
+            flash("Login successful!", "success")
             return redirect("/dashboard")
         else:
-            return "Invalid username or password!"
+            flash("Invalid username or password.", "danger")
+            return redirect("/login")
 
     return render_template("login.html")
-
-# Logout
-@app.route("/logout")
-def logout():
-    session.clear()
-    return redirect("/")
 
 # Dashboard
 @app.route("/dashboard")
@@ -112,6 +116,7 @@ def dashboard():
 @app.route("/add_score", methods=["GET", "POST"])
 def add_score():
     if "user_id" not in session:
+        flash("Please log in first.", "warning")
         return redirect("/login")
 
     if request.method == "POST":
@@ -127,7 +132,7 @@ def add_score():
                     (session["user_id"], date, subject, test_type, score, max_score))
         conn.commit()
         conn.close()
-
+        flash("Score added successfully.", "success")
         return redirect("/dashboard")
 
     return render_template("add_score.html")
@@ -155,14 +160,17 @@ def edit_score(score_id):
         """, (date, subject, test_type, score, max_score, score_id, session["user_id"]))
         conn.commit()
         conn.close()
-
+        flash("Score updated.", "info")
         return redirect("/dashboard")
 
-    # Pre-fill form with existing data
     cur.execute("SELECT date, subject, test_type, score, max_score FROM scores WHERE id=? AND user_id=?",
                 (score_id, session["user_id"]))
     score_data = cur.fetchone()
     conn.close()
+
+    if not score_data:
+        flash("Score not found.", "danger")
+        return redirect("/dashboard")
 
     return render_template("edit_score.html", score=score_data, score_id=score_id)
 
@@ -177,11 +185,20 @@ def delete_score(score_id):
     cur.execute("DELETE FROM scores WHERE id=? AND user_id=?", (score_id, session["user_id"]))
     conn.commit()
     conn.close()
-
+    flash("Score deleted.", "warning")
     return redirect("/dashboard")
 
+# Logout
+@app.route("/logout")
+def logout():
+    session.clear()
+    flash("Logged out.", "info")
+    return redirect("/login")
+
 # -----------------------------
-# RUN APP
+# RUN APP (works locally or on a host that sets PORT)
 # -----------------------------
 if __name__ == "__main__":
-    app.run(debug=True)
+    port = int(os.environ.get("PORT", 5000))
+    # bind to 0.0.0.0 so platform can reach it
+    app.run(host="0.0.0.0", port=port, debug=False)
