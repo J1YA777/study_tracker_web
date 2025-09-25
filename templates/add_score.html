@@ -1,10 +1,30 @@
-<h2>Add Test/Homework Score</h2>
-<form method="POST">
-    Date (YYYY-MM-DD): <input type="text" name="date" required><br>
-    Subject: <input type="text" name="subject" required><br>
-    Test/Homework: <input type="text" name="test_type" required><br>
-    Score: <input type="number" name="score" required><br>
-    Max Score: <input type="number" name="max_score" required><br>
-    <input type="submit" value="Add Score">
-</form>
-<a href="/">Back to Home</a>
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Add Score</title>
+</head>
+<body>
+    <h1>Add a New Score</h1>
+    <form method="POST">
+        <label>Date:</label>
+        <input type="date" name="date" required><br><br>
+
+        <label>Subject:</label>
+        <input type="text" name="subject" required><br><br>
+
+        <label>Test Type:</label>
+        <input type="text" name="test_type" placeholder="Quiz, Exam, Homework" required><br><br>
+
+        <label>Score:</label>
+        <input type="number" step="0.01" name="score" required><br><br>
+
+        <label>Max Score:</label>
+        <input type="number" step="0.01" name="max_score" required><br><br>
+
+        <button type="submit">Save</button>
+    </form>
+
+    <br>
+    <a href="/dashboard">Back to Dashboard</a>
+</body>
+</html> 
