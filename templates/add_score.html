@@ -2,29 +2,45 @@
 <html>
 <head>
     <title>Add Score</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
 </head>
-<body>
-    <h1>Add a New Score</h1>
-    <form method="POST">
-        <label>Date:</label>
-        <input type="date" name="date" required><br><br>
+<body class="bg-light">
 
-        <label>Subject:</label>
-        <input type="text" name="subject" required><br><br>
+<div class="container mt-5">
+    <div class="card shadow-sm">
+        <div class="card-body">
+            <h2 class="card-title text-center mb-4">Add Score</h2>
+            <form method="POST">
+                <div class="mb-3">
+                    <label class="form-label">Date</label>
+                    <input type="date" name="date" class="form-control" required>
+                </div>
 
-        <label>Test Type:</label>
-        <input type="text" name="test_type" placeholder="Quiz, Exam, Homework" required><br><br>
+                <div class="mb-3">
+                    <label class="form-label">Subject</label>
+                    <input type="text" name="subject" class="form-control" required>
+                </div>
 
-        <label>Score:</label>
-        <input type="number" step="0.01" name="score" required><br><br>
+                <div class="mb-3">
+                    <label class="form-label">Test Type</label>
+                    <input type="text" name="test_type" class="form-control" required>
+                </div>
 
-        <label>Max Score:</label>
-        <input type="number" step="0.01" name="max_score" required><br><br>
+                <div class="mb-3">
+                    <label class="form-label">Score</label>
+                    <input type="number" step="0.1" name="score" class="form-control" required>
+                </div>
 
-        <button type="submit">Save</button>
-    </form>
+                <div class="mb-3">
+                    <label class="form-label">Max Score</label>
+                    <input type="number" step="0.1" name="max_score" class="form-control" required>
+                </div>
 
-    <br>
-    <a href="/dashboard">Back to Dashboard</a>
+                <button type="submit" class="btn btn-primary w-100">Save Score</button>
+            </form>
+        </div>
+    </div>
+</div>
+
 </body>
-</html> 
+</html>
