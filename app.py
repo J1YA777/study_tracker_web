@@ -87,7 +87,7 @@ def login():
 
     return render_template("login.html")
 
-# Dashboard Route (updated to show scores)
+# Dashboard Route 
 @app.route("/dashboard")
 def dashboard():
     if "user_id" not in session:
@@ -95,11 +95,28 @@ def dashboard():
 
     conn = sqlite3.connect("database.db")
     cur = conn.cursor()
+
+    # Fetch all scores for logged-in user
     cur.execute("SELECT date, subject, test_type, score, max_score FROM scores WHERE user_id=?", (session["user_id"],))
     scores = cur.fetchall()
+
+    # Calculate average per subject
+    cur.execute("""
+        SELECT subject, AVG(score), AVG(max_score)
+        FROM scores
+        WHERE user_id=?
+        GROUP BY subject
+    """, (session["user_id"],))
+    subject_avgs = cur.fetchall()
+
     conn.close()
 
-    return render_template("dashboard.html", username=session["username"], scores=scores)
+    return render_template(
+        "dashboard.html",
+        username=session["username"],
+        scores=scores,
+        subject_avgs=subject_avgs
+    )
 
 # Add Score Route
 @app.route("/add_score", methods=["GET", "POST"])
