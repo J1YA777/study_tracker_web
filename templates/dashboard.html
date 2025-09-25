@@ -2,6 +2,7 @@
 <html>
 <head>
     <title>Dashboard</title>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 </head>
 <body>
     <h1>Welcome, {{ username }}!</h1>
@@ -27,6 +28,34 @@
             </tr>
             {% endfor %}
         </table>
+
+        <h2>Progress Chart</h2>
+        <canvas id="scoreChart" width="400" height="200"></canvas>
+        <script>
+            const labels = {{ scores | map(attribute=0) | list | tojson }};
+            const scores = {{ scores | map(attribute=3) | list | tojson }};
+            const maxScores = {{ scores | map(attribute=4) | list | tojson }};
+
+            new Chart(document.getElementById('scoreChart'), {
+                type: 'line',
+                data: {
+                    labels: labels,
+                    datasets: [{
+                        label: 'Your Score',
+                        data: scores,
+                        borderColor: 'blue',
+                        fill: false
+                    },
+                    {
+                        label: 'Max Score',
+                        data: maxScores,
+                        borderColor: 'red',
+                        borderDash: [5, 5],
+                        fill: false
+                    }]
+                }
+            });
+        </script>
     {% else %}
         <p>No scores yet. Add one <a href="/add_score">here</a>.</p>
     {% endif %}
