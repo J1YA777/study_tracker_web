@@ -20,5 +20,5 @@ This app allows users to log in, enter their test or homework scores, and view t
 - **SQLite** – database to store user accounts and scores  
 - **Matplotlib / Plotly** – for generating graphs of user progress  
 - **HTML/CSS** – frontend design  
-- **AI-assisted coding**  – ChatGPT was used to help write the code 
-  
+- **AI-assisted coding**  – ChatGPT was used to help write the code
+- - **Tested using Replit** - Replit and the agent thingy was used to test this
